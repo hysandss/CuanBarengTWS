@@ -4,13 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
   <title>TRADING MODUL • Member Area</title>
-  <meta name="description" content="Koleksi video modul trading berbasis Google Drive" />
+  <meta name="description" content="Koleksi video modul trading berbasis Google Drive & YouTube" />
 
   <script>
     var colorTheme = "#006eff"; 
-    //oren: e8c84a
-    //ungu: 8910ed
-    //biru: 006eff
     
     (function () {
       var hex = colorTheme.replace('#', '');
@@ -157,11 +154,11 @@
       </div>
       <div class="modal-video-wrap">
         <iframe id="modalIframe" src=""
-          allow="autoplay; encrypted-media; picture-in-picture"
+          allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
           allowfullscreen title="Video Player"></iframe>
       </div>
       <div class="modal-footer">
-        <a class="modal-open-btn" id="modalOpenLink" href="#" target="_blank" rel="noopener noreferrer">
+        <a class="modal-open-btn" id="modalOpenLink" href="#" target="_blank" rel="noopener noreferrer" style="display: none;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
             <polyline points="15 3 21 3 21 9"/>
@@ -180,14 +177,13 @@
     'use strict';
 
     // ============ KONFIGURASI DISCORD ============
-    // GANTI DENGAN DATA ANDA
     const DISCORD_CLIENT_ID = "1438028069884661802";
     const DISCORD_GUILD_ID = "1437814912058392817";
     const ALLOWED_ROLES = [
-      "1439187844471197696", //lifetime
-      "1439188037581148201", //month
-      "1439188156657307709", //years
-      "1493478908002173100"  //all in one crypto
+      "1439187844471197696",
+      "1439188037581148201",
+      "1439188156657307709",
+      "1493478908002173100"
     ];
     
     let currentUser = null;
@@ -269,7 +265,6 @@
       const token = getTokenFromHash();
       
       if (!token) {
-        // Cek localStorage
         const savedToken = localStorage.getItem('discord_token');
         const savedUser = localStorage.getItem('discord_user');
         if (savedToken && savedUser) {
@@ -289,15 +284,11 @@
         return false;
       }
       
-      // Ada token di URL, proses login
       showLoading();
       clearHash();
       
       try {
-        // Fetch user data
         const user = await fetchDiscordUser(token);
-        
-        // Fetch guild member data
         const member = await fetchUserGuildMember(token, DISCORD_GUILD_ID);
         
         if (!member) {
@@ -306,7 +297,6 @@
           return false;
         }
         
-        // Check roles
         const userRoles = member.roles || [];
         const hasAllowedRole = userRoles.some(roleId => ALLOWED_ROLES.includes(roleId));
         
@@ -316,7 +306,6 @@
           return false;
         }
         
-        // Determine role name
         let roleName = "Member";
         if (userRoles.some(r => r === ALLOWED_ROLES[2])) roleName = "👑 Admin";
         else if (userRoles.some(r => r === ALLOWED_ROLES[1])) roleName = "⭐ Premium Member";
@@ -331,7 +320,6 @@
           token: token
         };
         
-        // Save to localStorage
         localStorage.setItem('discord_token', token);
         localStorage.setItem('discord_user', JSON.stringify({
           id: currentUser.id,
@@ -358,7 +346,6 @@
       if (currentUser && elUserInfo) {
         elUserInfo.style.display = 'flex';
         
-        // Avatar
         if (currentUser.avatar) {
           elUserAvatarImg.src = `https://cdn.discordapp.com/avatars/${currentUser.id}/${currentUser.avatar}.png?size=64`;
           elUserAvatarImg.style.display = 'block';
@@ -369,11 +356,9 @@
           elUserAvatarImg.style.display = 'none';
         }
         
-        // Name
         const displayName = currentUser.globalName || currentUser.username;
         elUserName.textContent = displayName;
         
-        // Role badge
         elUserRoleBadge.textContent = currentUser.roleName;
         if (currentUser.roleName.includes('Premium')) {
           elUserRoleBadge.className = 'user-role-badge premium';
@@ -445,7 +430,7 @@
     
     function embedUrl(video) {
       if (video.source === 'youtube')
-        return 'https://www.youtube.com/embed/' + video.id + '?autoplay=1&rel=0';
+        return 'https://www.youtube.com/embed/' + video.id + '?autoplay=1&rel=0&modestbranding=1&showinfo=0';
       return 'https://drive.google.com/file/d/' + video.id + '/preview';
     }
     
@@ -632,7 +617,7 @@
             '<div class="folder-hero-eyebrow">FOLDER MATERI</div>' +
             '<h1 class="folder-hero-title">' + esc(folderName) + '</h1>' +
             '<span class="folder-hero-badge">' + videos.length + ' VIDEO</span>' +
-          '</div>' +
+                    '</div>' +
         '</div>' +
         '<div class="folder-video-header">' +
           '<span class="folder-video-title">DAFTAR VIDEO</span>' +
@@ -664,7 +649,7 @@
               '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M18 6L6 18M6 6l12 12"/></svg>' +
               'RESET FILTER</button>' +
           '</div>' +
-                    '<div class="video-grid" id="videoGrid">' + buildVideoCards(allVideos) + '</div>' +
+          '<div class="video-grid" id="videoGrid">' + buildVideoCards(allVideos) + '</div>' +
         '</div>';
       
       buildFilterBar();
@@ -789,17 +774,18 @@
       }).join('');
     }
     
+    // ============ FUNGSI UTAMA YANG DIREVISI ============
+    // Button "BUKA VIDEO" sudah dihilangkan untuk YouTube (disembunyikan)
+    // Button tetap muncul hanya untuk Google Drive
+    
     function attachCardEvents() {
       elContentWrapper.querySelectorAll('.video-card').forEach(card => {
         const open = () => {
           const video = allVideos.find(v => v.id === card.dataset.id && v.source === card.dataset.src);
           if (!video) return;
           
-          if (video.source === 'youtube') {
-            window.open(video.link, '_blank', 'noopener,noreferrer');
-          } else {
-            openModal(video);
-          }
+          // SEMUA VIDEO (baik YouTube maupun Drive) diputar di modal website
+          openModal(video);
         };
         card.addEventListener('click', open);
         card.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') { e.preventDefault(); open(); }});
@@ -813,11 +799,14 @@
       elMTags.innerHTML    = video.tags.map(t => '<span class="modal-tag">' + esc(t) + '</span>').join('');
       
       if (video.source === 'youtube') {
-        elMLabel.textContent = 'BUKA DI YOUTUBE';
+        // Untuk YouTube: SEMBUNYIKAN tombol buka video
+        elMLink.style.display = 'none';
         elMBadge.textContent = 'YOUTUBE';
         elMBadge.className   = 'modal-source-badge yt';
       } else {
-        elMLabel.textContent = 'BUKA DI GOOGLE DRIVE';
+        // Untuk Google Drive: TAMPILKAN tombol buka video
+        elMLink.style.display = 'inline-flex';
+        elMLabel.textContent = '📁 BUKA DI GOOGLE DRIVE';
         elMBadge.textContent = 'GOOGLE DRIVE';
         elMBadge.className   = 'modal-source-badge gd';
       }
